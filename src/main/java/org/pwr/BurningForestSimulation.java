@@ -14,26 +14,35 @@ public class BurningForestSimulation {
         this.size = size;
         this.forestiation = forestiation;
         this.fireSpread = true;
-        this.burningRows = new HashSet<>();
-        for (int i = 0; i < size; i++) {
-            this.burningRows.add(i);
+
+        burningRows = new HashSet<>();
+        for (int i = 0; i < this.size; i++) {
+            burningRows.add(i);
         }
     }
 
-    public void runSim() {
+    public double runSim() {
         this.initializeMap();
+        int initialTrees = this.count("T");
         this.startFire();
-        this.printMap();
-
-        int i = 0;
         while (this.fireSpread) {
             runEpoque();
-            System.out.println(i);
-            this.printMap();
-            i++;
         }
+        int burntTrees = this.count("B");
+        return (double)burntTrees / (double)initialTrees;
+    }
 
-        this.printMap();
+    private int count(String obj) {
+        int counter = 0;
+
+        for (int i = 0; i < this.size; i++) {
+            for (int j = 0; j < this.size; j++) {
+                if (Objects.equals(this.map[i][j], obj))  {
+                    counter++;
+                }
+            }
+        }
+        return counter;
     }
 
     private void initializeMap() {
@@ -56,6 +65,8 @@ public class BurningForestSimulation {
 
 
     private void printMap() {
+        clearScreen();
+
         for (int i = 0; i < this.size; i++) {
             StringBuilder row = new StringBuilder();
 
@@ -65,20 +76,24 @@ public class BurningForestSimulation {
 
             System.out.println(row.toString());
         }
-        System.out.println("\n");
+    }
+
+    private static void clearScreen() {
+        System.out.print("\033[H\033[2J"); // ANSI escape sequence to clear the screen
+        System.out.flush();
     }
 
 
     private void runEpoque() {
         this.fireSpread = false;
+
+        ArrayList<Point> burnt = new ArrayList<>();
         Set<Integer> staticRows = new HashSet<>();
-        String[][] tempMap = new String[this.size][this.size];
-        System.arraycopy(this.map, 0, tempMap, 0, this.map.length);
 
         for (int i : burningRows) {
             for (int j = 0; j < this.size; j++) {
                 if (Objects.equals(this.map[i][j], "B")) {
-                    spreadFire(tempMap, i, j);
+                    spreadFire(burnt, i, j);
                 }
             }
 
@@ -87,21 +102,25 @@ public class BurningForestSimulation {
             }
         }
 
-        for (int rowNum : staticRows) {
-            this.burningRows.remove(rowNum);
+        for (Point point : burnt) {
+            this.map[point.x][point.y] = "B";
+            staticRows.remove(point.x);
+            burningRows.add(point.x);
         }
 
-        System.arraycopy(tempMap, 0, this.map, 0, this.map.length);
+        for (int staticRow : staticRows) {
+            burningRows.remove(staticRow);
+        }
     }
 
-    private void spreadFire(String[][] tempMap, int x, int y) {
+    private void spreadFire(ArrayList<Point> burntTiles, int x, int y) {
 
         for (int i = x - 1; i <= x + 1; i++) {
             if (i >= 0 && i < this.size) {
                 for (int j = y - 1; j <= y + 1; j++) {
                     if (j >= 0 && j < this.size) {
                         if (Objects.equals(this.map[i][j], "T")) {
-                            tempMap[i][j] = "B";
+                            burntTiles.add(new Point(i, j));
                             this.fireSpread = true;
                         }
                     }
@@ -109,7 +128,6 @@ public class BurningForestSimulation {
             }
         }
     }
-
 
     private String generateTile() {
         if (Math.random() < this.forestiation) {
