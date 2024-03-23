@@ -5,12 +5,12 @@ import java.util.*;
 
 public class BurningForestSimulation {
     String[][] map;
-    private final float forestiation;
+    private final double forestiation;
     private final int size;
     private boolean fireSpread;
     private Set<Integer> burningRows;
 
-    BurningForestSimulation(int size, float forestiation) {
+    BurningForestSimulation(int size, double forestiation) {
         this.size = size;
         this.forestiation = forestiation;
         this.fireSpread = true;
